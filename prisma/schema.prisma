@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  HOST
+  GUEST
+}
+
+enum ListingType {
+  APARTMENT
+  HOUSE
+  VILLA
+  CABIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  username         String    @unique
+  phone            String?
+  password         String
+  role             Role      @default(GUEST)
+  avatar           String?
+  avatarPublicId   String?
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  verified         Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  listings Listing[]
+  bookings Booking[]
+  reviews  Review[]
+
+  @@index([email])
+  @@index([username])
+  @@index([name])
+  @@index([role])
+}
+
+model Listing {
+  id            Int         @id @default(autoincrement())
+  title         String
+  description   String
+  location      String
+  pricePerNight Float
+  guests        Int         @default(1)
+  type          ListingType @default(APARTMENT)
+  amenities     String[]    @default([])
+  rating        Float?
+  hostId        Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  host     User           @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  photos   ListingPhoto[]
+  reviews  Review[]
+
+  @@index([hostId])
+  @@index([location])
+  @@index([type])
+  @@index([pricePerNight])
+  @@index([guests])
+  @@index([type, location])
+}
+
+model ListingPhoto {
+  id        Int      @id @default(autoincrement())
+  url       String
+  publicId  String
+  listingId Int
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model Booking {
+  id         Int           @id @default(autoincrement())
+  listingId Int
+  guestId   Int
+  checkIn   DateTime
+  checkOut  DateTime
+  guests    Int           @default(1)
+  totalPrice Float
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  guest   User    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([guestId])
+  @@index([status])
+  @@index([checkIn])
+  @@index([checkOut])
+  @@index([listingId, checkIn, checkOut])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String
+  userId    Int
+  listingId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([listingId])
+  @@index([rating])
+}
