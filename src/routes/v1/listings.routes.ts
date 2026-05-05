@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import {
-  getAllListings,
+  getListings as getAllListings,
   getListingById,
   getListingStats,
   createListing,

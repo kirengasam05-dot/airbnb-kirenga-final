@@ -357,6 +357,25 @@ export const getListingsByHost = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+// 👉 TEMP FIXES to match your routes (no breaking changes)
+
+export const getListingStats = async (_req: any, res: any) => {
+  return res.status(200).json({
+    message: "Listing stats endpoint (not implemented yet)",
+  });
+};
+
+export const uploadListingPhotos = async (_req: any, res: any) => {
+  return res.status(200).json({
+    message: "Upload listing photos endpoint (not implemented yet)",
+  });
+};
+
+export const deleteListingPhoto = async (_req: any, res: any) => {
+  return res.status(200).json({
+    message: "Delete listing photo endpoint (not implemented yet)",
+  });
+};
 
 // Alias if your route imports getListingByHost instead of getListingsByHost
 export const getListingByHost = getListingsByHost;
