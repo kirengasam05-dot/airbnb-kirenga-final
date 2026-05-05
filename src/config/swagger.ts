@@ -1,35 +1,29 @@
 import swaggerJsdoc from "swagger-jsdoc";
-import swaggerUi from "swagger-ui-express";
-import type { Express } from "express";
 
-const options: swaggerJsdoc.Options = {
+const PORT = process.env.PORT || 3000;
+
+const BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://airbnb-kirenga-final.onrender.com"
+    : `http://localhost:${PORT}`;
+
+const swaggerOptions: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
       title: "Airbnb Kirenga API",
       version: "1.0.0",
-      description:
-        "Airbnb backend API with authentication, listings, bookings, reviews and AI features",
+      description: "API documentation for Airbnb backend with Prisma, JWT authentication, listings, bookings, reviews, and users.",
     },
 
     servers: [
       {
-        url: "http://localhost:3000",
-        description: "Local server",
+        url: BASE_URL,
+        description:
+          process.env.NODE_ENV === "production"
+            ? "Production server"
+            : "Local development server",
       },
-      {
-        url: process.env.API_URL || "https://airbnb-kirenga-final.onrender.com",
-        description: "Production server",
-      },
-    ],
-
-    tags: [
-      { name: "Auth", description: "Authentication endpoints" },
-      { name: "Users", description: "User endpoints" },
-      { name: "Listings", description: "Listing endpoints" },
-      { name: "Bookings", description: "Booking endpoints" },
-      { name: "Reviews", description: "Review endpoints" },
-      { name: "AI", description: "AI endpoints" },
     ],
 
     components: {
@@ -38,127 +32,151 @@ const options: swaggerJsdoc.Options = {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
-          description: "Paste token like: Bearer your_token_here",
+          description: "Enter JWT token like: Bearer your_token_here",
         },
       },
 
       schemas: {
-     RegisterInput: {
-  type: "object",
-  required: ["name", "email", "username", "password"],
-  properties: {
-    name: { type: "string", example: "Sam Host" },
-    email: { type: "string", example: "samhost2@example.com" },
-    username: { type: "string", example: "samhost2" },
-    phone: { type: "string", example: "0781234567" },
-    password: { type: "string", example: "Password123" },
-    role: { type: "string", example: "HOST" },
-  },
-},
+        RegisterInput: {
+          type: "object",
+          required: ["name", "email", "username", "password"],
+          properties: {
+            name: {
+              type: "string",
+              example: "Kirenga Sam",
+            },
+            email: {
+              type: "string",
+              example: "sam@example.com",
+            },
+            username: {
+              type: "string",
+              example: "kirengasam",
+            },
+            phone: {
+              type: "string",
+              example: "+250788000000",
+            },
+            password: {
+              type: "string",
+              example: "password123",
+            },
+            role: {
+              type: "string",
+              enum: ["GUEST", "HOST", "ADMIN"],
+              example: "GUEST",
+            },
+          },
+        },
 
         LoginInput: {
           type: "object",
           required: ["email", "password"],
           properties: {
-            email: { type: "string", example: "samhost@example.com" },
-            password: { type: "string", example: "Password123" },
+            email: {
+              type: "string",
+              example: "sam@example.com",
+            },
+            password: {
+              type: "string",
+              example: "password123",
+            },
           },
         },
 
         ListingInput: {
           type: "object",
-          required: [
-            "title",
-            "description",
-            "location",
-            "price",
-            "guests",
-            "type",
-          ],
+          required: ["title", "description", "location", "price", "guests", "type"],
           properties: {
-            title: { type: "string", example: "Modern Apartment Kigali" },
+            title: {
+              type: "string",
+              example: "Modern Apartment Kigali",
+            },
             description: {
               type: "string",
-              example: "Clean and beautiful apartment near Kigali city center",
+              example: "Clean and beautiful apartment in Kigali",
             },
-            location: { type: "string", example: "Kigali" },
-            price: { type: "number", example: 50 },
-            guests: { type: "integer", example: 2 },
-            type: { type: "string", example: "APARTMENT" },
+            location: {
+              type: "string",
+              example: "Kigali",
+            },
+            price: {
+              type: "number",
+              example: 50,
+            },
+            guests: {
+              type: "number",
+              example: 2,
+            },
+            type: {
+              type: "string",
+              enum: ["APARTMENT", "HOUSE", "VILLA", "CABIN"],
+              example: "APARTMENT",
+            },
             amenities: {
               type: "array",
-              items: { type: "string" },
-              example: ["wifi", "parking", "kitchen"],
+              items: {
+                type: "string",
+              },
+              example: ["wifi", "parking"],
             },
           },
         },
 
         BookingInput: {
           type: "object",
-          required: ["listingId", "checkIn", "checkOut", "guests"],
+          required: ["listingId", "startDate", "endDate"],
           properties: {
-            listingId: { type: "string", example: "paste-listing-id-here" },
-            checkIn: { type: "string", example: "2026-05-10" },
-            checkOut: { type: "string", example: "2026-05-15" },
-            guests: { type: "integer", example: 2 },
+            listingId: {
+              type: "number",
+              example: 1,
+            },
+            startDate: {
+              type: "string",
+              format: "date",
+              example: "2026-06-01",
+            },
+            endDate: {
+              type: "string",
+              format: "date",
+              example: "2026-06-05",
+            },
           },
         },
 
         ReviewInput: {
           type: "object",
-          required: ["rating", "comment"],
+          required: ["listingId", "rating", "comment"],
           properties: {
-            rating: { type: "integer", example: 5 },
-            comment: { type: "string", example: "Very nice place!" },
-          },
-        },
-
-        AIListingDescriptionInput: {
-          type: "object",
-          required: ["title", "location", "type", "amenities"],
-          properties: {
-            title: { type: "string", example: "Modern Apartment Kigali" },
-            location: { type: "string", example: "Kigali" },
-            type: { type: "string", example: "APARTMENT" },
-            amenities: {
-              type: "array",
-              items: { type: "string" },
-              example: ["wifi", "parking", "kitchen", "security"],
+            listingId: {
+              type: "number",
+              example: 1,
             },
-            tone: {
+            rating: {
+              type: "number",
+              example: 5,
+            },
+            comment: {
               type: "string",
-              example: "professional",
+              example: "Very nice place",
             },
-          },
-        },
-
-        ErrorResponse: {
-          type: "object",
-          properties: {
-            message: { type: "string", example: "Something went wrong" },
-            error: { type: "string", example: "Error details" },
           },
         },
       },
     },
+
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
 
-  // important: use this so swagger can read route comments
-  apis: ["src/routes/**/*.ts", "dist/routes/**/*.js"],
+  apis: [
+    "./src/routes/*.ts",
+    "./src/routes/**/*.ts",
+    "./src/controllers/*.ts",
+  ],
 };
-const specs = swaggerJsdoc(options);
-export const setupSwagger = (app: Express) => {
-  app.use(
-    "/api-docs",
-    swaggerUi.serve,
-    swaggerUi.setup(specs, {
-      explorer: true,
-      swaggerOptions: {
-        persistAuthorization: true,
-        tryItOutEnabled: true,
-        supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
-        displayRequestDuration: true,
-      },
-    })
-  );
-};
+
+export const swaggerSpec = swaggerJsdoc(swaggerOptions);
