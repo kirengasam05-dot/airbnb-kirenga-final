@@ -150,7 +150,7 @@ export const createListing = async (req: AuthRequest, res: Response) => {
       title,
       description,
       location,
-      price,
+      pricePerNight,
       guests,
       type,
       amenities,
@@ -161,7 +161,7 @@ export const createListing = async (req: AuthRequest, res: Response) => {
       !title ||
       !description ||
       !location ||
-      price === undefined ||
+      pricePerNight  === undefined ||
       guests === undefined ||
       !type
     ) {
@@ -182,7 +182,7 @@ export const createListing = async (req: AuthRequest, res: Response) => {
         title,
         description,
         location,
-        pricePerNight: Number(price),
+        pricePerNight: Number(pricePerNight),
         guests: Number(guests),
         type: type as ListingType,
         amenities: Array.isArray(amenities) ? amenities : [],
@@ -242,7 +242,7 @@ if (Number.isNaN(id)) {
       title,
       description,
       location,
-      price,
+      pricePerNight,
       guests,
       type,
       amenities,
@@ -262,7 +262,7 @@ if (Number.isNaN(id)) {
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
         ...(location !== undefined && { location }),
-        ...(price !== undefined && { price: Number(price) }),
+        ...(pricePerNight !== undefined && { pricePerNight: Number(pricePerNight),}),
         ...(guests !== undefined && { guests: Number(guests) }),
         ...(type !== undefined && { type: type as ListingType }),
         ...(amenities !== undefined && {

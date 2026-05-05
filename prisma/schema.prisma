@@ -65,6 +65,7 @@ model Listing {
   hostId        Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  image     String?
 
   host     User           @relation(fields: [hostId], references: [id], onDelete: Cascade)
   bookings Booking[]
