@@ -167,7 +167,6 @@ export function setupSwagger(app: Express): void {
         persistAuthorization: true,
         tryItOutEnabled: true,
         supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
-        displayRequestDuration: true,
       },
     })
   );
