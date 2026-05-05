@@ -18,7 +18,7 @@ const options: swaggerJsdoc.Options = {
         description: "Local server",
       },
       {
-        url: process.env.API_URL || "https://airbnb-kirenga.onrender.com",
+        url: process.env.API_URL || "https://airbnb-kirenga-final.onrender.com",
         description: "Production server",
       },
     ],
