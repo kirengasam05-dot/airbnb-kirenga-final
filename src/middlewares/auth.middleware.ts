@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-type Role = "ADMIN" | "HOST" | "GUEST";
+export type Role = "ADMIN" | "HOST" | "GUEST";
 
 export interface AuthRequest extends Request {
   userId?: number;
@@ -49,38 +49,24 @@ export const authenticate = (
 
 export const authMiddleware = authenticate;
 
-export const requireHost = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
+export const authorizeRoles = (...allowedRoles: Role[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.userId || !req.role) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-  if (req.role === "HOST" || req.role === "ADMIN") return next();
+    if (!allowedRoles.includes(req.role)) {
+      return res.status(403).json({
+        message: `Forbidden: allowed roles are ${allowedRoles.join(", ")}`,
+      });
+    }
 
-  return res.status(403).json({ message: "Forbidden: host access required" });
+    next();
+  };
 };
 
-export const requireGuest = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
+export const requireHost = authorizeRoles("HOST", "ADMIN");
 
-  if (req.role === "GUEST" || req.role === "ADMIN") return next();
+export const requireGuest = authorizeRoles("GUEST", "ADMIN");
 
-  return res.status(403).json({ message: "Forbidden: guest access required" });
-};
-
-export const requireAdmin = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  if (!req.userId) return res.status(401).json({ message: "Unauthorized" });
-
-  if (req.role === "ADMIN") return next();
-
-  return res.status(403).json({ message: "Forbidden: admin access required" });
-};
+export const requireAdmin = authorizeRoles("ADMIN");

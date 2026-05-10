@@ -16,21 +16,29 @@ import {
   addListingReview,
 } from "../../controllers/reviews.controller.js";
 
-import { authenticate, requireHost } from "../../middlewares/auth.middleware.js";
+import {
+  authenticate,
+  requireHost,
+  requireGuest,
+  requireAdmin,
+} from "../../middlewares/auth.middleware.js";
+
 import upload from "../../middlewares/upload.middleware.js";
 import { strictPostLimiter } from "../../middlewares/rateLimiter.js";
 
 const router = Router();
 
+/* =========================================================
+   PUBLIC LISTING ROUTES
+========================================================= */
+
 /**
  * @swagger
  * /api/v1/listings:
  *   get:
- *     summary: Get all listings
+ *     summary: Get all active listings
+ *     description: Public route. Guests can browse listings created by hosts.
  *     tags: [Listings]
- *     responses:
- *       200:
- *         description: Listings fetched successfully
  */
 router.get("/", getAllListings);
 
@@ -39,10 +47,8 @@ router.get("/", getAllListings);
  * /api/v1/listings/search:
  *   get:
  *     summary: Search listings
+ *     description: Public listing search route.
  *     tags: [Listings]
- *     responses:
- *       200:
- *         description: Search results fetched successfully
  */
 router.get("/search", getAllListings);
 
@@ -52,64 +58,87 @@ router.get("/search", getAllListings);
  *   get:
  *     summary: Get listing statistics
  *     tags: [Listings]
- *     responses:
- *       200:
- *         description: Listing stats fetched successfully
  */
 router.get("/stats", getListingStats);
+
+/**
+ * @swagger
+ * /api/v1/listings/{id}:
+ *   get:
+ *     summary: Get listing by ID
+ *     tags: [Listings]
+ */
+router.get("/:id", getListingById);
+
+/* =========================================================
+   HOST + ADMIN LISTING MANAGEMENT
+========================================================= */
 
 /**
  * @swagger
  * /api/v1/listings:
  *   post:
  *     summary: Create listing
+ *     description: HOST or ADMIN can create listings.
  *     tags: [Listings]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/ListingInput'
- *     responses:
- *       201:
- *         description: Listing created successfully
- *       401:
- *         description: Unauthorized
  */
-router.post("/", strictPostLimiter, authenticate, requireHost, createListing);
+router.post(
+  "/",
+  strictPostLimiter,
+  authenticate,
+  requireHost,
+  createListing
+);
+
+/**
+ * @swagger
+ * /api/v1/listings/{id}:
+ *   put:
+ *     summary: Update listing
+ *     description: HOST owner or ADMIN can update listing.
+ *     tags: [Listings]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put(
+  "/:id",
+  authenticate,
+  requireHost,
+  updateListing
+);
+
+/**
+ * @swagger
+ * /api/v1/listings/{id}:
+ *   delete:
+ *     summary: Delete listing
+ *     description: HOST owner or ADMIN can delete listing.
+ *     tags: [Listings]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.delete(
+  "/:id",
+  authenticate,
+  requireHost,
+  deleteListing
+);
+
+/* =========================================================
+   LISTING PHOTO MANAGEMENT
+========================================================= */
 
 /**
  * @swagger
  * /api/v1/listings/{id}/photos:
  *   post:
  *     summary: Upload listing photos
+ *     description: HOST owner or ADMIN uploads photos.
  *     tags: [Listings]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Listing ID
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               images:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
- *     responses:
- *       200:
- *         description: Photos uploaded successfully
  */
 router.post(
   "/:id/photos",
@@ -125,23 +154,10 @@ router.post(
  * /api/v1/listings/{id}/photos/{photoId}:
  *   delete:
  *     summary: Delete listing photo
+ *     description: HOST owner or ADMIN deletes photos.
  *     tags: [Listings]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *       - in: path
- *         name: photoId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Photo deleted successfully
  */
 router.delete(
   "/:id/photos/:photoId",
@@ -150,21 +166,16 @@ router.delete(
   deleteListingPhoto
 );
 
+/* =========================================================
+   REVIEWS
+========================================================= */
+
 /**
  * @swagger
  * /api/v1/listings/{id}/reviews:
  *   get:
  *     summary: Get listing reviews
  *     tags: [Listings]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Reviews fetched successfully
  */
 router.get("/:id/reviews", getListingReviews);
 
@@ -173,91 +184,37 @@ router.get("/:id/reviews", getListingReviews);
  * /api/v1/listings/{id}/reviews:
  *   post:
  *     summary: Add listing review
+ *     description: Only authenticated GUEST or ADMIN can review listings.
  *     tags: [Listings]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/ReviewInput'
- *     responses:
- *       201:
- *         description: Review added successfully
  */
-router.post("/:id/reviews", authenticate, addListingReview);
+router.post(
+  "/:id/reviews",
+  authenticate,
+  requireGuest,
+  addListingReview
+);
+
+/* =========================================================
+   ADMIN ROUTES
+========================================================= */
 
 /**
  * @swagger
- * /api/v1/listings/{id}:
+ * /api/v1/listings/admin/stats:
  *   get:
- *     summary: Get listing by ID
- *     tags: [Listings]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Listing fetched successfully
- *       404:
- *         description: Listing not found
- */
-router.get("/:id", getListingById);
-
-/**
- * @swagger
- * /api/v1/listings/{id}:
- *   put:
- *     summary: Update listing
- *     tags: [Listings]
+ *     summary: Admin listing analytics
+ *     description: ADMIN only route.
+ *     tags: [Admin Listings]
  *     security:
  *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/ListingInput'
- *     responses:
- *       200:
- *         description: Listing updated successfully
  */
-router.put("/:id", authenticate, requireHost, updateListing);
-
-/**
- * @swagger
- * /api/v1/listings/{id}:
- *   delete:
- *     summary: Delete listing
- *     tags: [Listings]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Listing deleted successfully
- */
-router.delete("/:id", authenticate, requireHost, deleteListing);
+router.get(
+  "/admin/stats",
+  authenticate,
+  requireAdmin,
+  getListingStats
+);
 
 export default router;
